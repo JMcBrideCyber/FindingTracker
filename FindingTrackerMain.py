@@ -13,9 +13,6 @@ class vulnData:
         self.cat1 = []
         self.cat2 = []
         self.cat3 = []
-        pass
-
-
 
 stigList = {}
 
@@ -65,24 +62,11 @@ for checklists in folder:
 
             for data in stigData:
                 
-				#Switch statement to get the information within fields that have data we want Vuln_Num/Rule_Title/Severity
-                # match data[0].text:
-                #     case "Vuln_Num":
-                #         vulnNumber = data[1].text.strip("\n")
-                #         continue
-
-                #     case "Severity":
-                #         severity = data[1].text.strip("\n")
-                #         continue
-                
                 if data[0].text == "Severity":
                     severity = data[1].text.strip("\n")
-                    #print(f"sev {severity}")
                 elif data[0].text == "Vuln_Num":
                     vulnNum = data[1].text.strip("\n")
-                    #print(f"vulnNum {vulnNum}")
                 
-            print(f"vuln {vulnNum} sev {severity}")
             if severity != "" and vulnNum != "":
                 match severity:
                     case "low":
@@ -100,6 +84,46 @@ for key, value in stigList.items():
     print(f"Total Unique Cat 1s: {len(value.cat1)} proof{value.cat1}")
     print(f"Total Unique Cat 2s: {len(value.cat2)} proof{value.cat2}")
     print(f"Total Unique Cat 3s: {len(value.cat3)} proof{value.cat3}")
+
+# Input Files:
+# Host001_A10NetworksADCNDM_V1R1
+# Host001_AdobeAcrobatReaderDC_V2R1
+# Host001_MSWord2013_V1R6
+# Host001_RHEL8_V1R6
+# Host001_zOSCatalogSolutions_V6R4
+# Host002_A10NetworksADCNDM_V1R1
+# Host002_AdobeAcrobatReaderDC_V2R1
+# Host003_AdobeAcrobatReaderDC_V2R1
+
+# Output:
+
+# A10 Networks ADC NDM Security Technical Implementation Guide
+# Total Unique Cat 1s: 2 proof['V-68051', 'V-68093']
+# Total Unique Cat 2s: 3 proof['V-68053', 'V-68055', 'V-68037']
+# Total Unique Cat 3s: 0 proof[]
+
+# Adobe Acrobat Reader DC Continuous Track Security Technical Implementation Guide
+# Total Unique Cat 1s: 1 proof['V-213192']
+# Total Unique Cat 2s: 7 proof['V-213168', 'V-213169', 'V-213170', 'V-213181', 'V-213193', 
+# 'V-213173', 'V-213184']
+# Total Unique Cat 3s: 2 proof['V-213187', 'V-213176']
+
+# Microsoft Word 2013 STIG
+# Total Unique Cat 1s: 0 proof[]
+# Total Unique Cat 2s: 4 proof['V-26615', 'V-26616', 'V-26617', 'V-26648']
+# Total Unique Cat 3s: 0 proof[]
+
+# Red Hat Enterprise Linux 8 Security Technical Implementation Guide
+# Total Unique Cat 1s: 4 proof['V-230223', 'V-230234', 'V-230235', 'V-230533']
+# Total Unique Cat 2s: 20 proof['V-230226', 'V-230228', 'V-230229', 'V-230349', 'V-230367', 'V-230369',
+# 'V-230370', 'V-230371', 'V-230372', 'V-230390', 'V-230392', 'V-230393', 'V-230419', 'V-230425', 
+# 'V-230426', 'V-230427', 'V-230429', 'V-230430', 'V-230431', 'V-230472'] 
+# Total Unique Cat 3s: 6 proof['V-230292', 'V-230293', 'V-230294', 'V-230346', 'V-230350', 'V-230470']
+
+# z/OS Catalog Solutions for RACF STIG
+# Total Unique Cat 1s: 0 proof[]
+# Total Unique Cat 2s: 0 proof[]
+# Total Unique Cat 3s: 0 proof[]
                 
                 
 
