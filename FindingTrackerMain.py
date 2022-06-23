@@ -7,6 +7,17 @@ import os
 import glob
 from os.path import isfile, join
 import xlsxwriter
+from tkinter.tix import COLUMN
+from cgitb import text
+from email import header
+from fileinput import filename
+from sre_parse import State
+import tkinter as tk
+from tkinter import *
+from tkinter import filedialog
+from numpy import size
+from subprocess import call
+import time
 
 class vulnData:
     def __init__(self):
@@ -14,76 +25,117 @@ class vulnData:
         self.cat2 = []
         self.cat3 = []
 
-stigList = {}
+def browseFiles():
+    browseFiles.filePath = filedialog.askdirectory(initialdir = "/", title = "Choose a file")
+    fileReadback.config(state = NORMAL)
+    fileReadback.insert(1.0, browseFiles.filePath)
+    fileReadback.config(state = DISABLED)
+
+def getUniques():
+    
+    folder = glob.glob(browseFiles.filePath + "\\*.ckl")
+    stigList = {}
+    tree = elt.ElementTree()
+
+    for checklists in folder:
+
+        tree.parse(checklists)
+
+        root = tree.findall("STIGS/iSTIG/STIG_INFO")
+
+        vulndata = vulnData()
+
+        for stigData in root:
+
+            stigInfo = stigData.findall("SI_DATA")
+
+            for data in stigData:
+                if data[0].text == "title":
+                    stigTitle = data[1].text
+                    if (len(stigList) == 0 or stigTitle not in stigList): 
+                        stigList.update({stigTitle : vulndata})
+                    else:
+                        vulndata = stigList[stigTitle]
+                    break
+                    
+
+        root = tree.findall("STIGS/iSTIG/VULN")
+
+        for cklData in root:
+
+            status = cklData.find("STATUS")
+
+            if status.text == "Not_Reviewed":
+                errorWindow = tk.Tk()
+                errorWindow.title("Error!")
+                errorLabel = Label(errorWindow, text = "Error! \n" + os.path.basename(checklists) + "\n has unreviewed checks.\n Please make sure all checks are reviewed and try again.")
+                errorLabel.pack(side="top", fill="x",pady=10)
+                acceptButton = Button(errorWindow, text = "Okay", command = lambda:[errorWindow.destroy(), window.destroy(), quit()], height = 2, width = 15)
+                acceptButton.pack(side="bottom",pady=10)
+                errorWindow.mainloop()
+                
+                
+            elif status.text == "Open":
+
+                #Grabbing the information in "STIG_DATA" tag
+                stigData = cklData.findall("STIG_DATA")
+
+                #Looking at the info in "STIG_DATA" tags
+                severity = ""
+                vulnNum = ""
+
+                for data in stigData:
+                    
+                    if data[0].text == "Severity":
+                        severity = data[1].text.strip("\n")
+                    elif data[0].text == "Vuln_Num":
+                        vulnNum = data[1].text.strip("\n")
+                    
+                if severity != "" and vulnNum != "":
+                    match severity:
+                        case "low":
+                            if vulnNum not in vulndata.cat3:
+                                vulndata.cat3.append(vulnNum)
+                        case "medium":
+                            if vulnNum not in vulndata.cat2:
+                                vulndata.cat2.append(vulnNum)
+                        case "high":
+                            if vulnNum not in vulndata.cat1:
+                                vulndata.cat1.append(vulnNum)
+
+    for key, value in stigList.items():
+        print(key)
+        print(f"Total Unique Cat 1s: {len(value.cat1)} proof{value.cat1}")
+        print(f"Total Unique Cat 2s: {len(value.cat2)} proof{value.cat2}")
+        print(f"Total Unique Cat 3s: {len(value.cat3)} proof{value.cat3}") 
+
+    window.destroy()
+
+
+window = Tk()
+window.title("Finding Tracker")
+window.geometry("500x200")
+
+#Header that tells the user what to do
+header = Label(window, text = "Select a directory of checklists to process.", font = (("Calibri"), 15))
+header.place(anchor=CENTER, relx = .5, rely = .1)
+
+#Button to open file explorer
+browseFilesButton = Button(window, text = "Browse Files", command = browseFiles, height = 2, width = 20)
+browseFilesButton.place(anchor=CENTER, relx = .20, rely = .33)
+
+#Text box that reads back the directory selected
+fileReadback = Text(height = 2, width = 30, state = DISABLED)
+fileReadback.place(anchor = CENTER, relx = .65, rely = .33)
+
+#Button to get all the inputs and begin processing
+startButton = Button(window, text = "Start", height = 3, width = 30, command = getUniques)
+startButton.place(anchor = CENTER, relx = .5, rely = .66)
+
+window.mainloop()
 
 outFile = open("testFile.txt", "w")
 
-tree = elt.ElementTree()
-
-folder = glob.glob("C:\\Users\\JLMcB\\Documents\\TestingChecklists\\*.ckl")
-
-
-for checklists in folder:
-
-    tree.parse(checklists)
-
-    root = tree.findall("STIGS/iSTIG/STIG_INFO")
-
-    vulndata = vulnData()
-
-    for stigData in root:
-
-        stigInfo = stigData.findall("SI_DATA")
-
-        for data in stigData:
-            if data[0].text == "title":
-                stigTitle = data[1].text
-                if (len(stigList) == 0 or stigTitle not in stigList): 
-                    stigList.update({stigTitle : vulndata})
-                else:
-                    vulndata = stigList[stigTitle]
-                break
-                
-
-    root = tree.findall("STIGS/iSTIG/VULN")
-
-    for cklData in root:
-
-        status = cklData.find("STATUS")
-
-        if status.text == "Open":
-
-			#Grabbing the information in "STIG_DATA" tag
-            stigData = cklData.findall("STIG_DATA")
-
-			#Looking at the info in "STIG_DATA" tags
-            severity = ""
-            vulnNum = ""
-
-            for data in stigData:
-                
-                if data[0].text == "Severity":
-                    severity = data[1].text.strip("\n")
-                elif data[0].text == "Vuln_Num":
-                    vulnNum = data[1].text.strip("\n")
-                
-            if severity != "" and vulnNum != "":
-                match severity:
-                    case "low":
-                        if vulnNum not in vulndata.cat3:
-                            vulndata.cat3.append(vulnNum)
-                    case "medium":
-                        if vulnNum not in vulndata.cat2:
-                            vulndata.cat2.append(vulnNum)
-                    case "high":
-                        if vulnNum not in vulndata.cat1:
-                            vulndata.cat1.append(vulnNum)
-
-for key, value in stigList.items():
-    print(key)
-    print(f"Total Unique Cat 1s: {len(value.cat1)} proof{value.cat1}")
-    print(f"Total Unique Cat 2s: {len(value.cat2)} proof{value.cat2}")
-    print(f"Total Unique Cat 3s: {len(value.cat3)} proof{value.cat3}")
 
 # Input Files:
 # Host001_A10NetworksADCNDM_V1R1
